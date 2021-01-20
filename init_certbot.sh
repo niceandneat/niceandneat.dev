@@ -40,7 +40,7 @@ if [ ! -d "$certificates_path/letsencrypt/csr" ]; then
       --force-renewal" certbot
 
   echo "## Stop and remove nginx (without https) container"
-  docker-compose down nginx
+  docker-compose down
 
   echo "## Uncomment SSL related directives in the configuration"
   sed -i -r 's/#?;#//g' /etc/nginx/sites-enabled/niceandneat.dev.conf
