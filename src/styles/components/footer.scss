@@ -1,0 +1,26 @@
+.footer {
+  @include upper-bound;
+
+  min-height: 80px;
+  margin-top: 64px;
+  padding: 0 16px;
+}
+
+.footer__inner {
+  @include devider;
+
+  padding: 16px 0;
+  text-align: right;
+}
+
+.footer__link {
+  & > * {
+    vertical-align: middle;
+  }
+}
+
+.footer__icon {
+  width: 24px;
+  height: 24px;
+  margin-left: 4px;
+}

@@ -1,0 +1,40 @@
+.header {
+  @include upper-bound;
+
+  padding: 16px 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  @include respond-to('medium') {
+    padding: 32px 16px;
+  }
+}
+
+.header__title {
+  @include font-query(32px, 48px);
+
+  font-weight: 900;
+}
+
+.flex-circle__container {
+  display: flex;
+  align-items: center;
+  background-color: $color-text;
+  color: $color-background;
+  border-radius: 50%;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    padding-top: 100%;
+  }
+}
+
+.flex-circle__item {
+  @include font-query(14px, 18px);
+
+  display: block;
+  padding: 8px;
+}

@@ -1,0 +1,65 @@
+/* For language tag */
+.blog-highlight {
+  position: relative;
+}
+
+pre[class*='language-']::before {
+  background: #d4d4d4;
+  color: #1e1e1e;
+  border-radius: 0px 0px 4px 4px;
+  font-size: 0.75rem;
+  letter-spacing: 0.075em;
+  line-height: 1;
+  padding: 0.25rem 0.5rem;
+  position: absolute;
+  top: 0px;
+  right: 1.5rem;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+pre[class='language-javascript']::before {
+  content: 'js';
+  background: #efd81d;
+  color: #000000;
+}
+
+pre[class='language-jsx']::before {
+  content: 'jsx';
+  background: #efd81d;
+  color: #000000;
+}
+
+pre[class='language-typescript']::before {
+  content: 'ts';
+  background: #2f74c0;
+  color: #f7f7f7;
+}
+
+pre[class='language-tsx']::before {
+  content: 'tsx';
+  background: #2f74c0;
+  color: #f7f7f7;
+}
+
+pre[class='language-html']::before {
+  content: 'html';
+  background: #dd4b25;
+  color: #f7f7f7;
+}
+
+pre[class='language-css']::before {
+  content: 'css';
+  background: #254bdd;
+  color: #f7f7f7;
+}
+
+pre[class='language-scss']::before {
+  content: 'scss';
+  background: #c76495;
+  color: #f7f7f7;
+}
+
+pre[class='language-bash']::before {
+  content: 'bash';
+}

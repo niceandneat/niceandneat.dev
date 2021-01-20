@@ -1,0 +1,165 @@
+.about__section {
+  @include devider;
+
+  padding-bottom: 48px;
+  padding-top: 48px - 1px;
+
+  @include respond-to('medium') {
+    padding-bottom: 64px;
+    padding-top: 64px - 1px;
+  }
+}
+
+.about__sub-section {
+  margin-bottom: 48px;
+
+  @include respond-to('medium') {
+    margin-bottom: 64px;
+  }
+}
+
+.about__title {
+  @include font-query(28px, 36px);
+
+  margin-bottom: 48px;
+  font-weight: 700;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 0.8em;
+    margin-right: 8px;
+    background-color: $color-text;
+  }
+
+  @include respond-to('medium') {
+    margin-bottom: 64px;
+  }
+}
+
+.about__period {
+  @include font-query(14px, 16px);
+
+  margin-bottom: 16px;
+  color: $color-subtext;
+}
+
+.about__name-container {
+  @include font-query(18px, 24px);
+
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.about__name {
+  font-weight: 700;
+}
+
+.about__position {
+  margin-left: 8px;
+
+  &::before {
+    content: '/';
+    display: inline-block;
+    margin-right: 8px;
+  }
+}
+
+.about__description {
+  @include font-query(16px, 18px);
+}
+
+.about__list {
+  @include font-query(16px, 18px);
+
+  list-style: none;
+}
+
+.about__list-item {
+  padding-left: 16px;
+  position: relative;
+
+  &::before {
+    content: '▪';
+    display: inline-block;
+    position: absolute;
+    left: 0;
+  }
+
+  & + & {
+    margin-top: 8px;
+  }
+}
+
+.abstract__container {
+  display: flex;
+  align-items: center;
+}
+
+.abstract__face {
+  margin-right: 16px;
+
+  @include respond-to('medium') {
+    margin-right: 40px;
+  }
+
+  & > svg {
+    width: 120px;
+    height: 120px;
+
+    @include respond-to('medium') {
+      width: 200px;
+      height: 200px;
+    }
+  }
+}
+
+.abstract__name {
+  margin-bottom: 8px;
+  font-size: 32px;
+  font-weight: 700;
+
+  @include respond-to('medium') {
+    margin-bottom: 16px;
+    font-size: 48px;
+  }
+}
+
+.abstract__description {
+  @include font-query(16px, 24px);
+}
+
+.abstract__link-container {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 700;
+
+  @include respond-to('medium') {
+    margin-top: 20px;
+    font-size: 18px;
+  }
+}
+
+.abstract__link {
+  &:hover {
+    text-decoration: underline;
+  }
+
+  & + &::before {
+    content: '/';
+    display: inline-block;
+    margin: 0 4px;
+  }
+}
+
+.drawing {
+  fill: none;
+  stroke: $color-background;
+  stroke-width: 1;
+}
+
+.drawing--start {
+  stroke: $color-text;
+}

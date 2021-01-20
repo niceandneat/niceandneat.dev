@@ -1,0 +1,54 @@
+// media query breakpoints map
+$breakpoints-size: (
+  'medium': 560px,
+  'large': 840px,
+);
+
+$breakpoints: (
+  'medium': (
+    min-width: map-get($breakpoints-size, 'medium'),
+  ),
+  'large': (
+    min-width: map-get($breakpoints-size, 'large'),
+  ),
+);
+
+/// Responsive breakpoint manager
+/// @access public
+/// @param {String} $breakpoint - Breakpoint
+/// @requires $breakpoints
+@mixin respond-to($breakpoint) {
+  $raw-query: map-get($breakpoints, $breakpoint);
+
+  @if $raw-query {
+    $query: if(
+      type-of($raw-query) == 'string',
+      unquote($raw-query),
+      inspect($raw-query)
+    );
+
+    @media #{$query} {
+      @content;
+    }
+  } @else {
+    @error 'No value found for `#{$breakpoint}`. '
+         + 'Please make sure it is defined in `$breakpoints` map.';
+  }
+}
+
+@mixin upper-bound {
+  max-width: map-get($breakpoints-size, 'large');
+  margin: 0 auto;
+}
+
+@mixin devider($position: 'top', $width: 1px) {
+  border-#{$position}: $width solid $color-border;
+}
+
+@mixin font-query($small, $medium) {
+  font-size: $small;
+
+  @include respond-to('medium') {
+    font-size: $medium;
+  }
+}

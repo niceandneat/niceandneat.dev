@@ -1,0 +1,67 @@
+body {
+  color: $color-text;
+  background-color: $color-background;
+}
+
+.main {
+  @include upper-bound;
+
+  padding: 0 16px;
+}
+
+.tag-title {
+  @include devider;
+
+  padding-bottom: 48px;
+  padding-top: 48px - 1px;
+  font-size: 28px;
+  font-weight: 900;
+
+  a {
+    font-weight: 700;
+    color: $color-subtext;
+
+    &:hover {
+      color: $color-text;
+    }
+  }
+
+  @include respond-to('medium') {
+    padding-bottom: 64px;
+    padding-top: 64px - 1px;
+    font-size: 36px;
+  }
+}
+
+.posts__list {
+  list-style: none;
+}
+
+.posts__item {
+  padding-bottom: 48px;
+
+  @include respond-to('medium') {
+    padding-bottom: 64px;
+  }
+}
+
+.post__title {
+  @include font-query(20px, 28px);
+}
+
+.post__title-link {
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.post__date {
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: $color-subtext;
+
+  @include respond-to('medium') {
+    margin-bottom: 16px;
+    font-size: 18px;
+  }
+}

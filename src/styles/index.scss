@@ -1,0 +1,11 @@
+@import './reset';
+@import './common';
+@import './colors';
+@import './utils';
+
+@import './components/header.scss';
+@import './components/footer.scss';
+@import './components/markdown.scss';
+
+@import './pages/main.scss';
+@import './pages/about.scss';
