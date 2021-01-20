@@ -26,7 +26,7 @@ description: 웹의 뿌리를 느끼기 위해 HTML 파일 생성부터 배포�
 
 힙스터 감성과 위 요구사항을 동시에 만족시키기 위해 어떤 시행착오를 겪었는지 적어보려고 한다.
 
-## Webpack
+## Bundling : Webpack
 
 모든 과정중에서 가장 많은 시간을 들였던 부분이다. 번들링 작업 없이 블로그의 각 페이지에 들어갈 HTML와 Asset들을 손으로 구성해서 넣어도 된다. 하지만 중복되는 코드 재사용, 외부 라이브러리 사용, Minify 나 Autoprefix 등의 post process, Typescript 빌드 등 일일이 하기엔 손이 많이 가는 작업들을 줄이기 위해서 자동화된 번들링 시스템이 필요했다. [Webpack](https://webpack.js.org/)을 이용해 블로그의 번들링 시스템을 만들었다.
 
@@ -351,7 +351,7 @@ dist
 
 포스트들의 Routing과 스트립트 파일 관리도 위와 비슷한 방법으로 해결했다.
 
-## Nginx
+## Server : Nginx
 
 static 파일들을 만들었으니 이제 호스팅해줄 서버만 있으면 된다. 앞서 말한것 처럼 [AWS S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html), [Github Pages](https://pages.github.com/) 등을 사용하면 편하겠지만 이 이상의 욕심이 있었다. 나중에 프로젝트를 위한 API 서버를 만들 필요가 있을지도 모르니 Reverse Proxy 서버가 하나 있으면 좋겠다는 생각이 들었다. 그래서 평소에 사용해보고 싶었던 [Nginx](https://nginx.org/)로 웹서버를 구성하기로 했다.
 
@@ -377,7 +377,7 @@ server {
 **niceandneat.dev.conf**
 
 ```
-# api reverse proxy
+# api reverse proxy 예시
 
 upstream docker-api {
     server api:3000;
@@ -391,11 +391,12 @@ server {
     location / {
         proxy_pass http://docker-api:3000;
         include    nginxconfig.io/proxy.conf;
+        # return 404;
     }
 }
 ```
 
-`api.niceandneat.dev` 서브 도메인으로 api reverse proxy 설정을 했다. `upstream` block의 내용은 이후 프로젝트 배포상태에 따라 변경될 것이다.
+`api.niceandneat.dev` 서브 도메인으로 api reverse proxy 설정을 했다. 위 내용은 예시이며 `upstream` block의 내용은 이후 프로젝트 배포상태에 따라 변경될 수 있다. 현재는 돌아가야 할 API가 없어서 `return 404;` 로만 처리했다.
 
 ### Docker Compose
 
@@ -481,7 +482,7 @@ if [ ! -d "$certificates_path/letsencrypt/csr" ]; then
       --force-renewal" certbot
 
   echo "## Stop and remove nginx (without https) container"
-  docker-compose down nginx
+  docker-compose down
 
   echo "## Uncomment SSL related directives in the configuration"
   sed -i -r 's/#?;#//g' /etc/nginx/sites-enabled/niceandneat.dev.conf
@@ -495,3 +496,9 @@ echo
 ```
 
 위 스크립트를 실행하고 `docker-compose up -d`를 입력하면 서버가 실행된다!
+
+### AWS Lightsail
+
+Docker를 돌릴 서버는 [AWS Lightsail](https://lightsail.aws.amazon.com/)로 선택했다. 이유는 사용하기 쉽고 저렴해서이다. 가격으로만 보자면 비슷한 클라우스 서비스들이 많았지만 서울리전이 있다는 점이 마음에 들어 결정했다. 월 20$짜리 요금으로 시작했다.
+
+## CI/CD : Jenkins

@@ -9,5 +9,5 @@ export function changeExt(fileName: string, ext: string) {
 export function slug(text: string) {
   return text
     .toLowerCase()
-    .replace(/([{}[\]/?.,;:|)*~`!^+<>@#$%&\\=('"]|\s)+/gi, '-');
+    .replace(/([{}[\]/?.,;:|)*~`!^+<>@#$%&\\=('"-]|\s)+/gi, '-');
 }
