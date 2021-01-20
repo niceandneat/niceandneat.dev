@@ -4,7 +4,7 @@ domains=(niceandneat.dev api.niceandneat.dev)
 certificates_path="./certbot"
 email="niceaneat@gmail.com"
 
-if [ ! -e "$certificates_path/dhparam.pem" ]; then
+if [ ! -e "$certificates_path/keys/dhparam.pem" ]; then
   echo "# Generate Diffie-Hellman keys..."
   docker-compose run --rm --entrypoint "\
     openssl dhparam \

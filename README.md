@@ -1,1 +1,3 @@
-# I am not a good writer
+# niceandneat.dev Blog
+
+https://niceandneat.dev/posts/blog
