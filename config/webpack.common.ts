@@ -2,6 +2,7 @@ import webpack from 'webpack';
 import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
+import CopyPlugin from 'copy-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 
@@ -15,10 +16,11 @@ import {
   JS_DIST,
   CSS_DIST,
   IMAGE_DIST,
+  OG_IMAGE,
 } from './settings';
 
 const CI = !!process.env.CI;
-const urlRoot = process.env.SITE_URL || 'https://niceandneat.dev/';
+const urlRoot = process.env.SITE_URL || 'https://niceandneat.dev';
 const devMode = process.env.NODE_ENV !== 'production';
 
 const pages = loadPages(devMode);
@@ -31,28 +33,28 @@ const HTMLLoaderOptions = {
   attributes: {
     root: fromRootTo(`./${SOURCE_DIR}`),
     // https://github.com/webpack-contrib/html-loader#list
-    list: [
-      '...',
-      {
-        tag: 'meta',
-        attribute: 'content',
-        type: 'src',
-        filter: (
-          tag: string,
-          attribute: string,
-          attributes: Record<string, string>,
-        ) => {
-          if (
-            attributes.property &&
-            attributes.property.trim().toLowerCase() === 'og:image'
-          ) {
-            return true;
-          }
+    // list: [
+    //   '...',
+    //   {
+    //     tag: 'meta',
+    //     attribute: 'content',
+    //     type: 'src',
+    //     filter: (
+    //       tag: string,
+    //       attribute: string,
+    //       attributes: Record<string, string>,
+    //     ) => {
+    //       if (
+    //         attributes.property &&
+    //         attributes.property.trim().toLowerCase() === 'og:image'
+    //       ) {
+    //         return true;
+    //       }
 
-          return false;
-        },
-      },
-    ],
+    //       return false;
+    //     },
+    //   },
+    // ],
   },
   preprocessor: HTMLPreprocessor(urlRoot, SOURCE_DIR),
 };
@@ -95,6 +97,15 @@ const config: webpack.Configuration = {
   plugins: [
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
     new BundleAnalyzerPlugin({ analyzerMode: CI ? 'disabled' : 'server' }),
+    new CopyPlugin({
+      patterns: [
+        // Copy a default og image
+        {
+          from: `${SOURCE_DIR}/assets/images/${OG_IMAGE}`,
+          to: `${IMAGE_DIST}/${OG_IMAGE}`,
+        },
+      ],
+    }),
     ...html.map((options) => new HtmlWebpackPlugin(options)),
   ],
   module: {

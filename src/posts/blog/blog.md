@@ -2,7 +2,6 @@
 title: (불편하게) 블로그 만들기
 date: '2021-01-18'
 description: 웹의 뿌리를 느끼기 위해 HTML 파일 생성부터 배포까지 일부러 불편하게 만들었던 블로그 이야기입니다.
-image: images/index.png
 ---
 
 > 이 글은 독자가 Webpack, Docker등 여기서 다루는 기술에 어느정도 익숙하다 가정하고 작성되었습니다.

@@ -9,6 +9,7 @@ export const JS_DIST = 'js';
 export const CSS_DIST = 'css';
 export const IMAGE_DIST = 'images';
 export const INDEX_PAGE = 'main';
+export const OG_IMAGE = 'main.png';
 
 export const PROJECT_ROOT = path.resolve(__dirname, '../');
 export const POST_ROOT = path.resolve(

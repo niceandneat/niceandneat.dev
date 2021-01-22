@@ -3,15 +3,15 @@ import posthtml from 'posthtml';
 import posthtmlInclude from 'posthtml-include';
 import posthtmlExpressions from 'posthtml-expressions';
 
-import { PAGE_ROOT, POST_ROOT, IMAGE_DIST } from '../settings';
+import { PAGE_ROOT, POST_ROOT, IMAGE_DIST, OG_IMAGE } from '../settings';
 import { getRoute } from './common';
 
 // Just for including static html files. (mostly for header)
 // I'd really like to write plain old html files, but I am too lazy to duplicate same header tags.
 export function HTMLPreprocessor(urlRoot: string, sourceDir: string) {
   return function preprocessor(content: string, loaderContext: any) {
-    const url = `${urlRoot}${route(loaderContext.resourcePath)}`;
-    const imageUrl = `${urlRoot}${IMAGE_DIST}/`;
+    const url = `${urlRoot}/${route(loaderContext.resourcePath)}`;
+    const imageUrl = `${urlRoot}/${IMAGE_DIST}/${OG_IMAGE}`;
 
     const expressions = {
       delimiters: ['[[', ']]'],
@@ -50,3 +50,11 @@ function route(resource: string) {
     return getRoute(PAGE_ROOT, directory);
   }
 }
+
+// Dirty hack for make og:image tag content url to have whole url shape.
+// function replaceToWholeUrl(html: string, imageUrl: string) {
+//   return html.replace(
+//     /<meta\s+property="og:image"\s+content="([^"]+)"\s*\/?>/,
+//     `<meta property="og:image" content="${imageUrl}$1" />`,
+//   );
+// }
