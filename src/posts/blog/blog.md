@@ -10,8 +10,6 @@ description: 웹의 뿌리를 느끼기 위해 HTML 파일 생성부터 배포�
 
 ## 선택
 
-![test](images/test.png)
-
 힘들었던 한 학기가 끝나고 모처럼 여유로운 방학이 생겼다. 미루고 미뤘던 블로그를 만들어 보고싶어졌다.
 
 블로그를 만드는 방법은 정말 다양하다. Node.js로 **Server Side Rendering** 서버 ([Next.js](https://nextjs.org/), [Express + Template Engine](https://expressjs.com/en/resources/template-engines.html))를 만들어 **PaaS** ([Netlify](https://www.netlify.com/), [Heroku](https://www.heroku.com/), [Firebase](https://firebase.google.com/))에 올려두면 된다. 아니면 **Static Site Generator** ([Gatsby](https://www.gatsbyjs.com/), [Hugo](https://gohugo.io/), [Jekyll](https://jekyllrb.com/))를 이용해 static file들을 만든 뒤 [AWS S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html), [Github Pages](https://pages.github.com/) 등을 이용해 간단히 호스팅해도 된다. 사실 이런거 저런거 만들 필요없이 이미 잘 만들어진 [네이버 블로그](https://section.blog.naver.com/), [티스토리](https://www.tistory.com/), [Medium](https://medium.com/) 등을 이용해도 된다.
