@@ -2,56 +2,51 @@ import fs from 'fs';
 import path from 'path';
 import { Options as HTMLWebpackPluginOptions } from 'html-webpack-plugin';
 
-const indexPage = 'main';
-const sourceDir = 'src';
+import { PROJECT_ROOT, PAGE_ROOT, SOURCE_DIR } from '../settings';
+import { getRoute, getEntryKey } from './common';
 
-const root = path.resolve(__dirname, '../../');
-const pageRoot = path.resolve(root, './src/pages');
-
-type LoopDirsCallback = (parent: string, child: fs.Dirent) => void;
+type LoopDirsCallback = (directory: string, child: fs.Dirent) => void;
 
 export function loadPages(devMode: boolean) {
   const entry: { [key: string]: string } = {};
   const html: HTMLWebpackPluginOptions[] = [];
   const htmlDist = devMode ? '' : 'html/';
 
-  function findEntry(parent: string, child: string) {
-    if (!/^index\.tsx?$/.test(child)) return;
+  function findEntry(directory: string, filename: string) {
+    if (!/^index\.tsx?$/.test(filename)) return;
 
-    const entryKey = getEntryKey(pageRoot, parent);
-    const entryValue = `./${path.relative(root, path.resolve(parent, child))}`;
-    entry[entryKey] = entryValue;
+    const key = getEntryKey(PAGE_ROOT, directory);
+    const value = `./${path.relative(
+      PROJECT_ROOT,
+      path.resolve(directory, filename),
+    )}`;
+    entry[key] = value;
   }
 
-  function findHTML(parent: string, child: string) {
-    if (child !== 'index.html') return;
+  function findHTML(directory: string, filename: string) {
+    if (filename !== 'index.html') return;
 
-    const htmlFileName =
-      path.basename(parent) === indexPage
-        ? 'index.html'
-        : path
-            .relative(pageRoot, path.resolve(parent, child))
-            .replace(/\.+[/\\]/g, '');
+    const route = getRoute(PAGE_ROOT, directory);
 
     const htmlOptions: HTMLWebpackPluginOptions = {
-      filename: `${htmlDist}${htmlFileName}`,
-      template: path.relative(root, path.resolve(parent, child)),
-      chunks: [getEntryKey(pageRoot, parent)],
-      favicon: path.resolve(root, 'src/assets/images/favicon.ico'),
+      filename: path.join(`${htmlDist}${route}`, 'index.html'),
+      template: path.relative(PROJECT_ROOT, path.resolve(directory, filename)),
+      chunks: [getEntryKey(PAGE_ROOT, directory)],
+      favicon: path.resolve(PROJECT_ROOT, 'src/assets/images/favicon.ico'),
       minify: { collapseWhitespace: true },
     };
 
     html.push(htmlOptions);
   }
 
-  function findEntryAndHTML(parent: string, child: fs.Dirent) {
+  function findEntryAndHTML(directory: string, child: fs.Dirent) {
     if (child.isFile()) {
-      findEntry(parent, child.name);
-      findHTML(parent, child.name);
+      findEntry(directory, child.name);
+      findHTML(directory, child.name);
     }
   }
 
-  makeLoopDirs(findEntryAndHTML)(pageRoot);
+  makeLoopDirs(findEntryAndHTML)(PAGE_ROOT);
 
   return { entry, html };
 }
@@ -61,20 +56,16 @@ export function loadPages(devMode: boolean) {
  */
 
 function makeLoopDirs(func: LoopDirsCallback) {
-  function loopDirs(parent: string) {
-    const children = fs.readdirSync(parent, { withFileTypes: true });
+  function loopDirs(directory: string) {
+    const children = fs.readdirSync(directory, { withFileTypes: true });
 
     for (const child of children) {
-      func(parent, child);
-      if (child.isDirectory() && path.basename(child.name) !== sourceDir) {
-        loopDirs(path.resolve(parent, child.name));
+      func(directory, child);
+      if (child.isDirectory() && path.basename(child.name) !== SOURCE_DIR) {
+        loopDirs(path.resolve(directory, child.name));
       }
     }
   }
 
   return loopDirs;
-}
-
-function getEntryKey(root: string, target: string) {
-  return path.relative(root, target).toString().replace(/\//g, '.');
 }

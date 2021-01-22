@@ -43,6 +43,7 @@
     "postcss": "^8.2.4",
     "postcss-loader": "^4.1.0",
     "posthtml": "^0.15.1",
+    "posthtml-expressions": "^1.7.1",
     "posthtml-include": "^1.6.0",
     "prismjs": "^1.23.0",
     "sass": "^1.32.4",

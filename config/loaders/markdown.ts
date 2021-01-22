@@ -1,8 +1,8 @@
-import fs from 'fs';
 import marked from 'marked';
 import fm from 'front-matter';
 import Prism from 'prismjs';
 import loadLanguages from 'prismjs/components/';
+
 import { slug } from '../utils';
 
 const supportLanguages = [
@@ -87,33 +87,17 @@ const extendOptions: any = {
 marked.setOptions(defaultOptions);
 marked.use(extendOptions);
 
-interface MarkdownLoaderOptions extends marked.MarkedOptions {
-  templatePath?: string;
-}
-
-export default function markdownLoader(this: any, source: string) {
-  const {
-    templatePath,
-    ...markedOptions
-  } = this.getOptions() as MarkdownLoaderOptions;
-  this.addDependency(templatePath);
-
+export default function markdownLoader(
+  this: any,
+  source: string,
+  map: any,
+  meta: any = {},
+) {
+  const options = (this.getOptions() as marked.MarkedOptions) || {};
   const frontMatter = fm<Record<string, string>>(source);
-  const markdown = marked(frontMatter.body, markedOptions);
-  const attributes = { ...frontMatter.attributes, markdown };
-  const template = templatePath && fs.readFileSync(templatePath).toString();
-  const html = replaceAttrs(attributes, template);
+  const markdown = marked(frontMatter.body, options);
+  meta.frontMatter = { ...frontMatter.attributes, markdown };
 
-  return html;
-}
-
-function replaceAttrs(attributes: Record<string, string>, template?: string) {
-  if (!template) {
-    return attributes.markdown;
-  }
-
-  return Object.entries(attributes).reduce((res, [key, value]) => {
-    const regex = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g');
-    return res.replace(regex, value);
-  }, template);
+  this.callback(null, markdown, map, meta);
+  return;
 }

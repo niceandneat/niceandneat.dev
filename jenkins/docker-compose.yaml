@@ -27,6 +27,8 @@ services:
     volumes:
       - jenkins-docker-certs:/certs/client:ro
       - jenkins-data:/var/jenkins_home
+    networks:
+      jenkins:
 
 volumes:
   jenkins-docker-certs:

@@ -1,21 +1,25 @@
 import webpack from 'webpack';
 import path from 'path';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 import { BundleAnalyzerPlugin } from 'webpack-bundle-analyzer';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
-import posthtml from 'posthtml';
-import posthtmlInclude from 'posthtml-include';
 
-import { loadPages, loadPosts } from './utils';
+import { fromRootTo, loadPages, loadPosts, HTMLPreprocessor } from './utils';
+import {
+  PROJECT_ROOT,
+  SOURCE_DIR,
+  ASSET_DIR,
+  IMAGE_DIR,
+  POST_DIR,
+  JS_DIST,
+  CSS_DIST,
+  IMAGE_DIST,
+} from './settings';
 
+const CI = !!process.env.CI;
+const urlRoot = process.env.SITE_URL || 'https://niceandneat.dev/';
 const devMode = process.env.NODE_ENV !== 'production';
-const projectRoot = path.resolve(__dirname, '../');
-const fromRootTo = (p: string) => path.resolve(projectRoot, p);
-const sourceDir = 'src';
-const jsDist = 'js';
-const cssDist = 'css';
 
 const pages = loadPages(devMode);
 const posts = loadPosts(devMode);
@@ -25,43 +29,51 @@ console.log({ entry, html });
 
 const HTMLLoaderOptions = {
   attributes: {
-    root: fromRootTo(`./${sourceDir}`),
-  },
-  // Just for including static html files. (mostly for header)
-  // I'd really like to write plain old html files, but I am too lazy to duplicate same header tags.
-  preprocessor(content: string, loaderContext: any) {
-    try {
-      const result: any = posthtml([
-        posthtmlInclude({ root: sourceDir }),
-      ]).process(content, { sync: true });
+    root: fromRootTo(`./${SOURCE_DIR}`),
+    // https://github.com/webpack-contrib/html-loader#list
+    list: [
+      '...',
+      {
+        tag: 'meta',
+        attribute: 'content',
+        type: 'src',
+        filter: (
+          tag: string,
+          attribute: string,
+          attributes: Record<string, string>,
+        ) => {
+          if (
+            attributes.property &&
+            attributes.property.trim().toLowerCase() === 'og:image'
+          ) {
+            return true;
+          }
 
-      return result.html;
-    } catch (error) {
-      loaderContext.emitError(error);
-
-      return content;
-    }
+          return false;
+        },
+      },
+    ],
   },
+  preprocessor: HTMLPreprocessor(urlRoot, SOURCE_DIR),
 };
 
 const config: webpack.Configuration = {
-  context: projectRoot,
+  context: PROJECT_ROOT,
   entry,
   output: {
     filename: devMode
-      ? `${jsDist}/[name].js`
-      : `${jsDist}/[name].[contenthash].js`,
-    assetModuleFilename: 'assets/[hash][ext][query]',
+      ? `${JS_DIST}/[name].js`
+      : `${JS_DIST}/[name].[contenthash].js`,
     path: fromRootTo('./dist'),
     publicPath: '/',
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      pages: fromRootTo(`./${sourceDir}/pages/`),
-      utils: fromRootTo(`./${sourceDir}/utils/`),
-      styles: fromRootTo(`./${sourceDir}/styles/`),
-      assets: fromRootTo(`./${sourceDir}/assets/`),
+      pages: fromRootTo(`./${SOURCE_DIR}/pages/`),
+      utils: fromRootTo(`./${SOURCE_DIR}/utils/`),
+      styles: fromRootTo(`./${SOURCE_DIR}/styles/`),
+      assets: fromRootTo(`./${SOURCE_DIR}/assets/`),
     },
   },
   optimization: {
@@ -82,16 +94,7 @@ const config: webpack.Configuration = {
   },
   plugins: [
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
-    new BundleAnalyzerPlugin(),
-    // new MiniCssExtractPlugin({
-    //   filename: devMode
-    //     ? `${cssDist}/[name].css`
-    //     : `${cssDist}/[name].[contenthash].css`,
-    //   chunkFilename: devMode
-    //     ? `${cssDist}/[id].css`
-    //     : `${cssDist}/[id].[contenthash].css`,
-    //   // TODO : wait until new updates for type of MiniCssExtractPlugin
-    // }) as any,
+    new BundleAnalyzerPlugin({ analyzerMode: CI ? 'disabled' : 'server' }),
     ...html.map((options) => new HtmlWebpackPlugin(options)),
   ],
   module: {
@@ -111,17 +114,10 @@ const config: webpack.Configuration = {
         type: 'asset/resource',
         generator: {
           filename: devMode
-            ? `${cssDist}/[name].css`
-            : `${cssDist}/[name].[contenthash].css`,
+            ? `${CSS_DIST}/[name].css`
+            : `${CSS_DIST}/[name].[contenthash].css`,
         },
         use: [
-          // MiniCssExtractPlugin.loader,
-          // {
-          //   loader: 'css-loader',
-          //   options: {
-          //     importLoaders: 1,
-          //   },
-          // },
           // for Autoprefixer
           'postcss-loader',
           // for scss parsing
@@ -129,7 +125,7 @@ const config: webpack.Configuration = {
             loader: 'sass-loader',
             options: {
               sassOptions: {
-                includePaths: [fromRootTo(`./${sourceDir}/styles/`)],
+                includePaths: [fromRootTo(`./${SOURCE_DIR}/styles/`)],
               },
             },
           },
@@ -140,8 +136,8 @@ const config: webpack.Configuration = {
         type: 'asset/resource',
         generator: {
           filename: devMode
-            ? `${cssDist}/[name].css`
-            : `${cssDist}/[name].[contenthash].css`,
+            ? `${CSS_DIST}/[name].css`
+            : `${CSS_DIST}/[name].[contenthash].css`,
         },
       },
       {
@@ -152,12 +148,15 @@ const config: webpack.Configuration = {
             options: HTMLLoaderOptions,
           },
           {
-            loader: fromRootTo('./config/loaders/markdown.ts'),
+            loader: fromRootTo('./config/loaders/htmlBridge.ts'),
             options: {
               templatePath: fromRootTo(
-                `./${sourceDir}/templates/markdown.html`,
+                `./${SOURCE_DIR}/templates/markdown.html`,
               ),
             },
+          },
+          {
+            loader: fromRootTo('./config/loaders/markdown.ts'),
           },
         ],
       },
@@ -167,6 +166,26 @@ const config: webpack.Configuration = {
         parser: {
           dataUrlCondition: {
             maxSize: 8 * 1024, // 8kb
+          },
+        },
+        generator: {
+          filename(pathData: any) {
+            const paths = pathData.filename.split(path.sep);
+
+            // for posts images
+            if (paths[1] === POST_DIR) {
+              return `${IMAGE_DIST}/posts/${paths[2]}/[name][ext]`;
+            }
+
+            // for assets images
+            if (paths[1] === ASSET_DIR) {
+              const imageRoot = path.join(SOURCE_DIR, ASSET_DIR, IMAGE_DIR);
+              const imagePath = path.relative(imageRoot, pathData.filename);
+
+              return `${IMAGE_DIST}/${imagePath}`;
+            }
+
+            return `${IMAGE_DIST}/[name][ext]`;
           },
         },
       },

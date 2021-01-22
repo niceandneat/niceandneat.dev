@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="ko">
   <head>
-    <include src="templates/meta.html">
-      { "title": "{{ title }}", "description": "{{ description }}" }
-    </include>
+    <include
+      src="templates/meta.html"
+      locals='{
+        "title": "{{ title }}",
+        "description": "{{ description }}",
+        "image": "{{ image }}"
+      }'
+    ></include>
     <link rel="stylesheet" href="/styles/prism-dark.scss" />
   </head>
   <body>
@@ -13,7 +18,7 @@
         <h1 class="markdown-front__title">{{ title }}</h1>
         <div class="markdown-front__date">{{ date }}</div>
       </div>
-      <div class="markdown">{{ markdown }}</div>
+      <div class="markdown">{{{ markdown }}}</div>
     </main>
     <include src="templates/footer.html"></include>
   </body>

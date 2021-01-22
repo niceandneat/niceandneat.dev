@@ -2,15 +2,18 @@
 title: (불편하게) 블로그 만들기
 date: '2021-01-18'
 description: 웹의 뿌리를 느끼기 위해 HTML 파일 생성부터 배포까지 일부러 불편하게 만들었던 블로그 이야기입니다.
+image: images/index.png
 ---
 
 > 이 글은 독자가 Webpack, Docker등 여기서 다루는 기술에 어느정도 익숙하다 가정하고 작성되었습니다.
 
-> 제가 글솜씨가 부족하기도 하고 생각보다 다룰 내용이 많아 코드와 내용을 많이 생략했습니다. 중간중간 걸어둔 링크와 [Github]()을 참조해주세요!
-
-힘들었던 한 학기가 끝나고 모처럼 여유로운 방학이 생겼다. 미루고 미뤘던 블로그를 만들어 보고싶어졌다.
+> 제가 글솜씨가 부족하기도 하고 생각보다 다룰 내용이 많아 코드와 내용을 많이 생략했습니다. 중간중간 걸어둔 링크와 [Github](https://github.com/niceandneat/niceandneat.dev)을 참조해주세요!
 
 ## 선택
+
+![test](images/test.png)
+
+힘들었던 한 학기가 끝나고 모처럼 여유로운 방학이 생겼다. 미루고 미뤘던 블로그를 만들어 보고싶어졌다.
 
 블로그를 만드는 방법은 정말 다양하다. Node.js로 **Server Side Rendering** 서버 ([Next.js](https://nextjs.org/), [Express + Template Engine](https://expressjs.com/en/resources/template-engines.html))를 만들어 **PaaS** ([Netlify](https://www.netlify.com/), [Heroku](https://www.heroku.com/), [Firebase](https://firebase.google.com/))에 올려두면 된다. 아니면 **Static Site Generator** ([Gatsby](https://www.gatsbyjs.com/), [Hugo](https://gohugo.io/), [Jekyll](https://jekyllrb.com/))를 이용해 static file들을 만든 뒤 [AWS S3](https://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteHosting.html), [Github Pages](https://pages.github.com/) 등을 이용해 간단히 호스팅해도 된다. 사실 이런거 저런거 만들 필요없이 이미 잘 만들어진 [네이버 블로그](https://section.blog.naver.com/), [티스토리](https://www.tistory.com/), [Medium](https://medium.com/) 등을 이용해도 된다.
 
@@ -145,24 +148,24 @@ Loader 함수 내부에서는 우선 [front-matter](https://github.com/jxson/fro
 <html lang="ko">
   <head>
     <include src="templates/meta.html">
-      { "title": "{{ title }}", "description": "{{ description }}" }
+      { "title": "@{{ title }}", "description": "@{{ description }}" }
     </include>
   </head>
   <body>
     <include src="templates/header.html"></include>
     <main class="main">
       <div class="markdown-front">
-        <h1 class="markdown-front__title">{{ title }}</h1>
-        <div class="markdown-front__date">{{ date }}</div>
+        <h1 class="markdown-front__title">@{{ title }}</h1>
+        <div class="markdown-front__date">@{{ date }}</div>
       </div>
-      <div class="markdown">{{ markdown }}</div>
+      <div class="markdown">@{{ markdown }}</div>
     </main>
     <include src="templates/footer.html"></include>
   </body>
 </html>
 ```
 
-위에서 `{{ key }}` 이렇게 중괄호 두개로 묶인 부분을 `attributes`의 각 `key`에 해당하는 `value`로 변경해준다. 즉 frontmatter와 markdown의 HTML 변환 결과를 가지고 새로운 HTML string을 만들게 된다. 이렇게 생성된 string은 `html-lodaer`로 흘러들어가 다른 HTML 파일들과 같은 과정을 거치게 된다.
+위에서 `@{{ key }}` 이렇게 중괄호 두개로 묶인 부분을 `attributes`의 각 `key`에 해당하는 `value`로 변경해준다. 즉 frontmatter와 markdown의 HTML 변환 결과를 가지고 새로운 HTML string을 만들게 된다. 이렇게 생성된 string은 `html-lodaer`로 흘러들어가 다른 HTML 파일들과 같은 과정을 거치게 된다.
 
 ### SCSS
 
@@ -502,3 +505,6 @@ echo
 Docker를 돌릴 서버는 [AWS Lightsail](https://lightsail.aws.amazon.com/)로 선택했다. 이유는 사용하기 쉽고 저렴해서이다. 가격으로만 보자면 비슷한 클라우스 서비스들이 많았지만 서울리전이 있다는 점이 마음에 들어 결정했다. 월 20$짜리 요금으로 시작했다.
 
 ## CI/CD : Jenkins
+
+Github에 푸쉬할 때마다 자동으로 webpack을 실행시키고 nginx를 reload해주는 CI 툴이 필요했다. [Jenkins](https://www.jenkins.io/), [Travis CI](https://www.travis-ci.com/), [Github Actions](https://github.com/features/actions) 들 중 고민했었다. Travis CI와 Github Actions는 서버구축이 필요없지만 오픈소스에만 무료이다. Jenkins는 서버만 있다면 마음껏 사용할 수 있다. 바로 위에서 서버를 만들었는데 Jenkins를 쓰지 않을 이유가 없었다. (귀여운 콧수염 아저씨는 덤이다.)
+https://issues.jenkins.io/browse/JENKINS-57495?page=com.atlassian.jira.plugin.system.issuetabpanels%3Aall-tabpanel

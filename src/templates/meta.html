@@ -3,8 +3,6 @@
   name="viewport"
   content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
 />
-<title>{{ title }}</title>
-<meta name="description" content="{{ description }}" />
 <link rel="preconnect" href="https://fonts.gstatic.com" />
 <link
   rel="stylesheet"
@@ -15,3 +13,16 @@
   href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap"
 />
 <link rel="stylesheet" href="/styles/index.scss" />
+
+<!-- SEO -->
+
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}" />
+
+<meta property="og:title" content="{{ title }}" />
+<meta property="og:url" content="[[ url ]]" />
+<meta property="og:description" content="{{ description }}" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="{{ image }}" />
+<!-- <meta property="og:image" content="[[ imageUrl ]]{{ image }}" /> -->
+<meta property="og:image:alt" content="{{ title }}" />

@@ -1,4 +1,5 @@
 declare module 'posthtml-include';
+declare module 'posthtml-expressions';
 
 declare module 'prismjs/components/';
 
