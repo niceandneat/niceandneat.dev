@@ -3,6 +3,28 @@
   name="viewport"
   content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
 />
+<link rel="preconnect" href="https://fonts.gstatic.com" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap"
+/>
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap"
+/>
+<link rel="stylesheet" href="/styles/index.scss" />
+
+<!-- SEO -->
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}" />
+
+<meta property="og:title" content="{{ title }}" />
+<meta property="og:url" content="[[ url ]]" />
+<meta property="og:description" content="{{ description }}" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="[[ imageUrl ]]" />
+<meta property="og:image:alt" content="{{ title }}" />
+
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <script
   async
@@ -17,25 +39,3 @@
 
   gtag('config', 'G-4Q6C6R6K06');
 </script>
-<link rel="preconnect" href="https://fonts.gstatic.com" />
-<link
-  rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap"
-/>
-<link
-  rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap"
-/>
-<link rel="stylesheet" href="/styles/index.scss" />
-
-<!-- SEO -->
-
-<title>{{ title }}</title>
-<meta name="description" content="{{ description }}" />
-
-<meta property="og:title" content="{{ title }}" />
-<meta property="og:url" content="[[ url ]]" />
-<meta property="og:description" content="{{ description }}" />
-<meta property="og:type" content="website" />
-<meta property="og:image" content="[[ imageUrl ]]" />
-<meta property="og:image:alt" content="{{ title }}" />
