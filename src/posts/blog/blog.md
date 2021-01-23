@@ -685,6 +685,7 @@ pipeline {
 
 ```bash
 #!/bin/bash
+export DIST_PATH='/home/ubuntu/projects/niceandneat.dev'
 
 # enable invert or negative wildcards
 shopt -s extglob
