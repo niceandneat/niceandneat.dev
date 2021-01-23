@@ -32,8 +32,7 @@ pipeline {
           }
           sshCommand remote: remote, command: "mkdir -p $DIST_PATH/temp"
           sshPut remote: remote, from: 'dist', into: "$DIST_PATH/temp"
-          sshCommand remote: remote, command: "rm -rfv $DIST_PATH/dist/!(projects) && mv -v $DIST_PATH/temp/dist/* $DIST_PATH/dist"
-          sshCommand remote: remote, command: "rm -rfv $DIST_PATH/temp"
+          sshScript remote: remote, script: "deploy.sh"
         }
       }
     }
