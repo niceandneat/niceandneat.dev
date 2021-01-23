@@ -13,7 +13,7 @@ pipeline {
 
   environment {
     CI = 'true'
-    DIST_PATH = '/home/ubuntu/projects/niceandneat.dev/'
+    DIST_PATH = '/home/ubuntu/projects/niceandneat.dev'
   }
 
   stages {
@@ -32,8 +32,8 @@ pipeline {
           }
           sshCommand remote: remote, command: "mkdir -p $DIST_PATH/temp"
           sshPut remote: remote, from: 'dist', into: "$DIST_PATH/temp"
-          sshCommand remote: remote, command: "rm -rf $DIST_PATH/dist && mv $DIST_PATH/temp/dist $DIST_PATH/dist"
-          sshCommand remote: remote, command: "rm -rf $DIST_PATH/temp"
+          sshCommand remote: remote, command: "rm -rfv $DIST_PATH/dist/!(projects) && mv -v $DIST_PATH/temp/* $DIST_PATH/dist"
+          sshCommand remote: remote, command: "rm -rfv $DIST_PATH/temp"
         }
       }
     }
