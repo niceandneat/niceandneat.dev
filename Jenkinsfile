@@ -31,6 +31,7 @@ pipeline {
             remote.identityFile = identity
           }
           sshCommand remote: remote, command: "mkdir -p $DIST_PATH/temp"
+          sshPut remote: remote, from: 'docker-compose.yaml', into: "$DIST_PATH/docker-compose.yaml"
           sshPut remote: remote, from: 'dist', into: "$DIST_PATH/temp"
           sshScript remote: remote, script: "deploy.sh"
         }

@@ -78,7 +78,7 @@ CodeGenerationError: No template for dependency: CssDependency
 
 처음에 `.html` 파일에서 HTML을 만든다는게 무슨말인가 의아할 수도 있었을 것이다. 어차피 마음에 드는 template engine도 없으니 그냥 HTML을 직접 작성하는 편이 좋다고 생각했다. 그래서 HTML Webpack Plugin의 `template` 옵션을 직접 작성한 `.html` 파일로 지정했다.
 
-두번째 `.html`을 작성하려고 할 때 바로 문제가 발생했다. 같은 내용의 `<head>` 태그를 넣기가 너무 귀찮았다. `html-loader`의 [공식문서](https://github.com/webpack-contrib/html-loader#posthtml)에서 [PostHTML](https://github.com/posthtml/posthtml)을 사용하는 것을 보고 시도해봤다. Plugin은 HTML 태그 재사용을 위한 [Include Plugin](https://github.com/posthtml/posthtml-include)만 사용했다. 기존 HTML의 문법을 해치지 않는 선에서 HTML 코드를 재사용할 수 있었다. 앞서 Template Engine의 단점이었던 부분을 보완해 꽤 괜찮다고 느껴 이 방법을 채택하기로 했다. 이렇게 결국 `.html` 파일에서 HTML을 만들게 되었다.
+두번째 `.html`을 작성하려고 할 때 바로 문제가 발생했다. 같은 내용의 `<head>` 태그를 넣기가 너무 귀찮았다. `html-loader`의 [공식문서](https://github.com/webpack-contrib/html-loader#posthtml)에서 [PostHTML](https://github.com/posthtml/posthtml)을 사용하는 것을 보고 시도해봤다. Plugin은 HTML 태그 재사용을 위한 [Include Plugin](https://github.com/posthtml/posthtml-include)과 [Expressions Plugin](https://github.com/posthtml/posthtml-include)을 사용했다. 기존 HTML의 문법을 해치지 않는 선에서 HTML 코드를 재사용할 수 있었다. 앞서 Template Engine의 단점이었던 부분을 보완해 꽤 괜찮다고 느껴 이 방법을 채택하기로 했다. 이렇게 결국 `.html` 파일에서 HTML을 만들게 되었다.
 
 ### Markdown
 
@@ -99,44 +99,173 @@ CodeGenerationError: No template for dependency: CssDependency
 **config/loaders/markdown.ts**
 
 ```typescript
-import fs from 'fs';
+import Prism from 'prismjs';
+import loadLanguages from 'prismjs/components/';
+
+import { slug } from '../utils';
+
+const supportLanguages = [
+  'html',
+  'css',
+  'scss',
+  'javascript',
+  'typescript',
+  'jsx',
+  'tsx',
+  'bash',
+];
+
+loadLanguages(supportLanguages);
+
+const defaultOptions: marked.MarkedOptions = {
+  langPrefix: 'language-',
+  highlight(code, lang) {
+    if (!lang) {
+      return code;
+    }
+
+    lang = lang.toLowerCase();
+
+    if (!supportLanguages.includes(lang)) {
+      throw new Error(
+        `unsupported language [${lang}]\nPlease use languages in ${supportLanguages}`,
+      );
+    }
+
+    return Prism.highlight(code, Prism.languages[lang], lang);
+  },
+};
+
+const extendOptions: any = {
+  renderer: {
+    heading(text: string, level: number) {
+      const escapedText = slug(text);
+
+      return `
+            <h${level}>
+              ${text}
+              <a name="${escapedText}" class="anchor" href="#${escapedText}">
+                <span class="header-link"></span>
+              </a>
+            </h${level}>`;
+    },
+    // Modification of https://github.com/markedjs/marked/blob/master/src/Renderer.js#L15
+    code(this: any, code: string, infostring: string) {
+      const lang = (infostring || '').match(/\S*/)?.[0];
+
+      if (this.options.highlight) {
+        const out = this.options.highlight(code, lang);
+        if (out != null && out !== code) {
+          code = out;
+        }
+      }
+
+      const className = this.options.langPrefix + lang;
+
+      return (
+        '<div class="blog-highlight">' +
+        '<pre class="' +
+        className +
+        '">' +
+        '<code class="' +
+        className +
+        '">' +
+        code +
+        '</code></pre></div>'
+      );
+    },
+    codespan(this: any, text: string) {
+      const className = this.options.langPrefix;
+
+      return `<code class="${className}">${text}</code>`;
+    },
+  },
+};
+
+// ...아래에 이어서
+```
+
+[Prismjs](https://prismjs.com/)를 이용한 코드 하이라이팅 로직과 code, codespan, heading 토큰에 대한 HTML 태그 렌더링 로직을 설정하는 부분이다. 렌더러를 작성할 때 [소스코드](https://github.com/markedjs/marked/blob/master/src/Renderer.js)를 참고했다. 맨마지막의 `marked.setOptions(defaultOptions)`와 `marked.use(extendOptions)`를 통해 marked에 기본 옵션과 렌더러를 설정해준다. 앞으로 marked를 통해 코드를 렌더링할 때 Prism으로 하이라이트 처리된다.
+
+**config/loaders/markdown.ts**
+
+```typescript
+// ...위에 이어서
+
 import marked from 'marked';
 import fm from 'front-matter';
-import Prism from 'prismjs';
 
-// ...생략
-
-marked.setOptions(defaultOptions);
-marked.use(extendOptions);
-
-interface MarkdownLoaderOptions extends marked.MarkedOptions {
-  templatePath?: string;
-}
-
-export default function markdownLoader(this: any, source: string) {
-  const {
-    templatePath,
-    ...markedOptions
-  } = this.getOptions() as MarkdownLoaderOptions;
-  this.addDependency(templatePath);
-
+export default function markdownLoader(
+  this: any,
+  source: string,
+  map: any,
+  meta: any = {},
+) {
+  const options = (this.getOptions() as marked.MarkedOptions) || {};
   const frontMatter = fm<Record<string, string>>(source);
-  const markdown = marked(frontMatter.body, markedOptions);
-  const attributes = { ...frontMatter.attributes, markdown };
-  const template = templatePath && fs.readFileSync(templatePath).toString();
-  const html = replaceAttrs(attributes, template);
+  const markdown = marked(frontMatter.body, options);
+  meta.frontMatter = { ...frontMatter.attributes, markdown };
 
-  return html;
+  this.callback(null, markdown, map, meta);
+  return;
 }
 ```
 
-Loader 코드의 일부를 가져왔다. 현재 Webpack 5에서 loader의 `this` type을 제공해주지 않아 `any`로 설정해 두었다.
+Loader 코드부분이다. 현재 Webpack 5에서 loader의 `this` type을 제공해주지 않아 `any`로 설정해 두었다.
 
-맨위의 `marked.setOptions(defaultOptions)`와 `marked.use(extendOptions)`는 [Prismjs](https://prismjs.com/)를 이용한 코드 하이라이팅 로직과 code, codespan, heading 토큰에 대한 HTML 태그 렌더링 로직을 marked에 설정하는 부분이다. 렌더러를 작성할 때 [소스코드](https://github.com/markedjs/marked/blob/master/src/Renderer.js)를 참고했다.
+Loader 함수 내부에서는 우선 [front-matter](https://github.com/jxson/front-matter)를 사용해 markdown `source`에서 `attributes`와 `body`를 분리한다. `body` 부분 만을 [marked](https://github.com/markedjs/marked)를 이용해 HTML string으로 변환했다. 이때 loader 옵션을 marked의 추가 옵션으로 사용한다. 만들어진 HTML string을 기존 `frontMatter.attribute`와 함께 `meta`에 넣어준다. `meta`는 loader의 실행과정에서 임의로 다음 loader로 전달할 수 있는 인자이다. 여기에 `frontMatter`를 담아 다음 loader에서 `frontMatter`결과를 사용할 수 있게한다.
 
-`MarkdownLoaderOptions`은 webpack에서 loader를 사용할 때 받는 옵션의 타입이다. marked의 `MarkedOptions `을 그대로 extend하고 최종적으로 만들어진 HTML이 들어갈 template의 경로인 `templatePath`를 추가했다.
+위 작업만으로는 그저 HTML string만 결과로 나올 뿐이다. 렌더링된 string 결과와 `frontMatter`를 이용해 실제 HTML을 만들어줄 필요가 있다. 현재 PostHTML을 사용하고 있으므로 이에 맞춘 htmlBridge loader를 작성했다. 앞으로 PostHTML을 계속 쓰게되지 않을 수도 있으므로 앞의 markdown loader와 일부러 분리해서 만들었다.
 
-Loader 함수 내부에서는 우선 [front-matter](https://github.com/jxson/front-matter)를 사용해 markdown `source`에서 `attributes`와 `body`를 분리한다. `body` 부분 만을 [marked](https://github.com/markedjs/marked)를 이용해 HTML string으로 변환했다. 이때 loader 옵션에서 `templatePath`를 제외한 필드들을 marked의 옵션으로 사용한다. `replaceAttrs()`에서는 frontmatter의 `attributes`의 값들과 markdown 변환 결과를 template 파일의 해당하는 부분에 넣어준다.
+**config/loaders/htmlBridge.ts**
+
+```typescript
+import fs from 'fs';
+import posthtml from 'posthtml';
+import posthtmlExpressions from 'posthtml-expressions';
+
+interface HtmlBridgeLoaderOptions {
+  templatePath?: string;
+}
+
+export default function htmlBridgeLoader(
+  this: any,
+  source: string,
+  map: any,
+  meta: any,
+) {
+  const callback = this.async();
+  const { templatePath }: HtmlBridgeLoaderOptions = this.getOptions();
+  const { frontMatter } = meta;
+
+  this.addDependency(templatePath);
+
+  const template = templatePath && fs.readFileSync(templatePath).toString();
+  const html = replaceAttrs(frontMatter, template);
+
+  callback(null, html, map, meta);
+}
+```
+
+`MarkdownLoaderOptions`은 webpack에서 loader를 사용할 때 받는 옵션의 타입이다. loader가 전달받은 HTML string을 사용할 template의 경로인 `templatePath`를 추가했다. 불러온 template 파일에 `meta.frontMatter`의 값들을 넣어 `html-laoder`에 넘길 최종 HTML string을 만들었다.
+
+**config/loaders/htmlBridge.ts**
+
+```typescript
+function replaceAttrs(frontMater: Record<string, string>, template?: string) {
+  if (!template) {
+    return frontMater.markdown;
+  }
+
+  const result: any = posthtml([
+    posthtmlExpressions({ locals: frontMater }),
+  ]).process(template, { sync: true });
+
+  return result.html;
+}
+```
+
+`replaceAttrs()`에서는 `posthtml-expressions`을 사용해 frontmatter의 값들과 markdown 변환 결과를 template 파일의 해당하는 부분에 넣어준다. 아래는 template 파일의 예시이다.
 
 **src/templates/markdown.html**
 
@@ -162,7 +291,7 @@ Loader 함수 내부에서는 우선 [front-matter](https://github.com/jxson/fro
 </html>
 ```
 
-위에서 `@{{ key }}` 이렇게 중괄호 두개로 묶인 부분을 `attributes`의 각 `key`에 해당하는 `value`로 변경해준다. 즉 frontmatter와 markdown의 HTML 변환 결과를 가지고 새로운 HTML string을 만들게 된다. 이렇게 생성된 string은 `html-lodaer`로 흘러들어가 다른 HTML 파일들과 같은 과정을 거치게 된다.
+위에서 `@{{ key }}` 이렇게 중괄호 두개로 묶인 부분을 `frontmatter`의 각 `key`에 해당하는 `value`로 변경해준다. 즉 frontmatter와 markdown의 HTML 변환 결과를 가지고 새로운 HTML string을 만들게 된다. 이렇게 생성된 string은 `html-lodaer`로 흘러들어가 다른 HTML 파일들과 같은 과정을 거치게 된다.
 
 ### SCSS
 
@@ -265,57 +394,52 @@ function makeLoopDirs(func: LoopDirsCallback) {
 **config/utils/loadPages.ts**
 
 ```typescript
-const indexPage = 'main';
-const root = path.resolve(__dirname, '../../');
-const pageRoot = path.resolve(root, './src/pages');
-const entry: { [key: string]: string } = {};
-const html: HTMLWebpackPluginOptions[] = [];
-const htmlDist = devMode ? '' : 'html/';
+export function loadPages(devMode: boolean) {
+  const entry: { [key: string]: string } = {};
+  const html: HTMLWebpackPluginOptions[] = [];
+  const htmlDist = devMode ? '' : 'html/';
 
-function getEntryKey(root: string, target: string) {
-  return path.relative(root, target).toString().replace(/\//g, '.');
-}
+  function findEntry(directory: string, filename: string) {
+    if (!/^index\.tsx?$/.test(filename)) return;
 
-function findEntry(parent: string, child: string) {
-  if (!/^index\.tsx?$/.test(child)) return;
-
-  const entryKey = getEntryKey(pageRoot, parent);
-  const entryValue = `./${path.relative(root, path.resolve(parent, child))}`;
-  entry[entryKey] = entryValue;
-}
-
-function findHTML(parent: string, child: string) {
-  if (child !== 'index.html') return;
-
-  const htmlFileName =
-    path.basename(parent) === indexPage
-      ? 'index.html'
-      : path
-          .relative(pageRoot, path.resolve(parent, child))
-          .replace(/\.+[/\\]/g, '');
-
-  const htmlOptions: HTMLWebpackPluginOptions = {
-    filename: `${htmlDist}${htmlFileName}`,
-    template: path.relative(root, path.resolve(parent, child)),
-    chunks: [getEntryKey(pageRoot, parent)],
-    favicon: path.resolve(root, 'src/assets/images/favicon.ico'),
-    minify: { collapseWhitespace: true },
-  };
-
-  html.push(htmlOptions);
-}
-
-function findEntryAndHTML(parent: string, child: fs.Dirent) {
-  if (child.isFile()) {
-    findEntry(parent, child.name);
-    findHTML(parent, child.name);
+    const key = getEntryKey(PAGE_ROOT, directory);
+    const value = `./${path.relative(
+      PROJECT_ROOT,
+      path.resolve(directory, filename),
+    )}`;
+    entry[key] = value;
   }
-}
 
-makeLoopDirs(findEntryAndHTML)(pageRoot);
+  function findHTML(directory: string, filename: string) {
+    if (filename !== 'index.html') return;
+
+    const route = getRoute(PAGE_ROOT, directory);
+
+    const htmlOptions: HTMLWebpackPluginOptions = {
+      filename: path.join(`${htmlDist}${route}`, 'index.html'),
+      template: path.relative(PROJECT_ROOT, path.resolve(directory, filename)),
+      chunks: [getEntryKey(PAGE_ROOT, directory)],
+      favicon: path.resolve(PROJECT_ROOT, 'src/assets/images/favicon.ico'),
+      minify: { collapseWhitespace: true },
+    };
+
+    html.push(htmlOptions);
+  }
+
+  function findEntryAndHTML(directory: string, child: fs.Dirent) {
+    if (child.isFile()) {
+      findEntry(directory, child.name);
+      findHTML(directory, child.name);
+    }
+  }
+
+  makeLoopDirs(findEntryAndHTML)(PAGE_ROOT);
+
+  return { entry, html };
+}
 ```
 
-마지막 줄 처럼 위의 `findEntryAndHTML()`을 `makeLoopDirs()`에 넣어서 나온 함수에 `pageRoot`을 넣고 실행시키면 폴더/파일 구조에 따라 webpack `entry`옵션과 `HTMLWebpackPlugin` constructor에 넣을 인자들이 생긴다. 이를 webpack configuration에 사용하면 다음과 같이 HTML파일과 JS파일 들이 빌드되어 나온다.
+`PAGE_ROOT`와 같이 대문자로 된 변수들은 폴더 구조나 배포 경로 구성을 설정값으로 관리하기 위해 따로 설정해둔 것이다. `getEntryKey()`와 `getRoute()`는 각각 파일의 디렉토리에 따라 `entry`에서 사용할 key값과 빌드 후 위치하게될 경로를 알려주는 함수이다. 마지막 줄 처럼 위의 `findEntryAndHTML()`을 `makeLoopDirs()`에 넣어서 나온 함수에 `pageRoot`을 넣고 실행시키면 폴더/파일 구조에 따라 webpack `entry`옵션과 `HTMLWebpackPlugin` constructor에 넣을 인자들이 생긴다. 이를 webpack configuration에 사용하면 다음과 같이 HTML파일과 JS파일 들이 빌드되어 나온다.
 
 **from**
 
@@ -365,14 +489,16 @@ static 파일들을 만들었으니 이제 호스팅해줄 서버만 있으면 �
 server {
     # ...생략
 
+    root                    /var/www/niceandneat.dev;
+
     # index.html fallback
     location / {
-        try_files $uri $uri/ $uri/index.html /html$uri /html$uri/ /html$uri/index.html =404;
+        try_files $uri $uri/index.html /html$uri /html$uri/index.html =404;
     }
 }
 ```
 
-빌드과정에서 HTML 파일들을 `html/` 폴더로 분리해 놨기때문에 이를 고려해 index.html fallback location block을 수정했다. 앞으로 만들 개별 프로젝트들은 `/projects` 폴더 안에서 별도의 파일 구조를 가질 예정이므로 `html/` 내부가 아닌 곳에 존재하는 파일도 체크하게끔 했다.
+빌드과정에서 HTML 파일들을 `html/` 폴더로 분리해 놨기때문에 이를 고려해 위 location block을 수정했다. 앞으로 만들 개별 프로젝트들은 `/projects` 폴더 안에서 별도의 파일 구조를 가질 예정이므로 `html/` 내부가 아닌 곳에 존재하는 파일도 체크하게끔 했다.
 
 **niceandneat.dev.conf**
 
@@ -435,7 +561,7 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 ```
 
-볼륨 바인딩 부분이 꽤 많은데 깔끔하게 하는 방법을 찾지 못했다. Certbot의 `entrypoint`는 유효기간이 90일인 Let's Encrypt의 인증서를 12시간마다 갱신해주는 스크립트이다. Nginx의 `entrypoint`는 갱신된 인증서를 반영하기위해 6시간마다 configuration을 reload해주는 스크립트이다.
+추가할 nginx config 파일들과 certbot 파일들을 각 container의 내부 경로에 바인딩했다. 이제 container들은 해당 파일들을 마치 바인딩한 경로에 존재하는 것 처럼 사용할 수 있다. 또한 `dist` 디렉토리를 nginx의 `root` 디렉토리와 바인딩해 `dist` 내의 파일들이 호스팅될 수 있도록 했다. 볼륨 바인딩 부분이 꽤 많은데 깔끔하게 하는 방법을 찾지 못했다. Certbot의 `entrypoint`는 유효기간이 90일인 Let's Encrypt의 인증서를 12시간마다 갱신해주는 스크립트이다. Nginx의 `entrypoint`는 갱신된 인증서를 반영하기위해 6시간마다 configuration을 reload해주는 스크립트이다.
 
 이 docker-compose 파일을 이용해 실제로 Diffie-Hellman key를 발급받고 Let's Encrypt 인증서를 받는 스크립트를 작성했다. 스크립트는 [nginxconfig.io](https://github.com/digitalocean/nginxconfig.io)와 [https://github.com/wmnnd/nginx-certbot](https://github.com/wmnnd/nginx-certbot)를 참조했다.
 
@@ -503,5 +629,85 @@ Docker를 돌릴 서버는 [AWS Lightsail](https://lightsail.aws.amazon.com/)로
 
 ## CI/CD : Jenkins
 
-Github에 푸쉬할 때마다 자동으로 webpack을 실행시키고 nginx를 reload해주는 CI 툴이 필요했다. [Jenkins](https://www.jenkins.io/), [Travis CI](https://www.travis-ci.com/), [Github Actions](https://github.com/features/actions) 들 중 고민했었다. Travis CI와 Github Actions는 서버구축이 필요없지만 오픈소스에만 무료이다. Jenkins는 서버만 있다면 마음껏 사용할 수 있다. 바로 위에서 서버를 만들었는데 Jenkins를 쓰지 않을 이유가 없었다. (귀여운 콧수염 아저씨는 덤이다.)
-https://issues.jenkins.io/browse/JENKINS-57495?page=com.atlassian.jira.plugin.system.issuetabpanels%3Aall-tabpanel
+Github에 푸쉬할 때마다 자동으로 webpack을 실행시키고 nginx를 reload해주는 CI 툴이 필요했다. [Jenkins](https://www.jenkins.io/), [Travis CI](https://www.travis-ci.com/), [Github Actions](https://github.com/features/actions) 들 중 고민했었다. Travis CI와 Github Actions는 서버구축이 필요없지만 오픈소스에만 무료이다. Jenkins는 서버만 있다면 마음껏 사용할 수 있다. 바로 위에서 서버를 만들었는데 Jenkins를 쓰지 않을 이유가 없었다. (귀여운 콧수염 아저씨는 덤이다.) 이 블로그에서 사용하는 Jenkinsfile은 다음과 같다.
+
+**Jenkinsfile**
+
+```
+// Reference https://issues.jenkins.io/browse/JENKINS-57269
+def remote = [:]
+remote.name = 'web'
+remote.host = '13.125.62.25'
+remote.allowAnyHosts = true
+
+pipeline {
+  agent {
+    docker {
+      image 'node:lts'
+    }
+  }
+
+  environment {
+    CI = 'true'
+    DIST_PATH = '/home/ubuntu/projects/niceandneat.dev'
+  }
+
+  stages {
+    stage('Build') {
+      steps {
+        sh 'npm ci'
+        sh 'npm run build'
+      }
+    }
+    stage('Deploy') {
+      steps {
+        withCredentials([sshUserPrivateKey(credentialsId: 'lightsail-rsa', keyFileVariable: 'identity', passphraseVariable: '', usernameVariable: 'userName')]) {
+          script {
+            remote.user = userName
+            remote.identityFile = identity
+          }
+          sshCommand remote: remote, command: "mkdir -p $DIST_PATH/temp"
+          sshPut remote: remote, from: 'docker-compose.yaml', into: "$DIST_PATH/docker-compose.yaml"
+          sshPut remote: remote, from: 'dist', into: "$DIST_PATH/temp"
+          sshScript remote: remote, script: "deploy.sh"
+        }
+      }
+    }
+  }
+}
+```
+
+편한 ssh 요청을 위해 [ssh-steps](https://github.com/jenkinsci/ssh-steps-plugin) 플러그인을 사용했다. 미리 Jenkins에 등록해놓은 `lightsail-rsa` private key를 사용해 lightsail 서버에 접근할 수 있게했다. 플러그인을 사용해 서버내의 블로그 디렉토리에 `temp` 임시 디렉토리를 만들어 그 안에 빌드된 파일들을 옮겼다.
+
+> 여기서 기존에 사용하던 RSA key가 플러그인에서 지원하는 포맷과 달라 오류가 발생해 [(issue)](https://issues.jenkins.io/browse/JENKINS-57495) 지원하는 포맷의 key를 새로 만들었다.
+
+**deploy.sh**
+
+```bash
+#!/bin/bash
+
+# enable invert or negative wildcards
+shopt -s extglob
+
+rm -rfv $DIST_PATH/dist/!(projects)
+mv -v $DIST_PATH/temp/dist/* $DIST_PATH/dist
+rm -rfv $DIST_PATH/temp
+```
+
+마지막으로 위의 간단한 스크립트를 실행해 임시 디렉토리 내부의 파일을 실제 `dist` 디렉토리로 옮겼다. 위 `docker-compose.yaml` 파일에서 `dist` 디렉토리를 nginx의 `root` 디렉토리와 바인딩해 `dist` 내의 파일들이 호스팅될 수 있도록 했다. 또한 앞으로 배포가 필요한 프로젝트들을 `dist/projects` 디렉토리 안에 넣어서 nginx가 호스팅 할 수 있도록 할 예정이다. 만약 `dist` 디렉토리 자체를 삭제하면 docker volume 바인딩도 풀리고 그 안의 `projects` 폴더도 지워진다. 따라서 `dist` 내부에 `projects`를 제외한 파일과 디렉토리들만 삭제했다. Nginx configuration을 수정하고 docker volume 바인딩을 추가해 아예 블로그 디렉토리와 프로젝트 디렉토리를 분리하는 것도 방법이 될 수 있을 것 같다.
+
+이제 원하는 코드나 글을 작성하고 푸시만 하면 블로그 홈페이지에 자동으로 반영된다!
+
+## 마치며
+
+코드 작성부터 배포까지 한계단 한계단씩 밟아가며 불편하게 블로그를 만들어봤다. 물론 더 불편하게 만드는 것도 가능하다. 돌이켜보니 부족한 부분도 많았다. 그래도 만들면서 배우는 점도 많고 욕심도 생기는 좋은 경험이었다. 생각보다 작업량이 많아서 글로 한번에 담기가 힘들었다. 더 보완하고 싶은 아쉬운 점이나 아이디어도 많다. 몇 가지만 나열해 보자면...
+
+1. PostHTML도 불편하다. 이미 스타일도 따로 관리하는 판에 React를 Template엔진으로 다시 사용하고 싶다.
+
+2. 카카오톡이나 SNS에 게시글 링크를 첨부했을 때 사용되는 이미지인 og:image 태그를 게시글마다 따로 설정하고 싶다. `CopyPlugin`으로도 시도해보고 `loaderContext`의 API들도 사용해 봤지만 마음에드는 방법이 없었다. React를 사용하면 좀 더 괜찮을지도...
+
+3. markdown 파일을 loader로 처리하지 않고 webpack 빌드 플로우와는 별개로 처리하는 것도 좋을 것 같다. 지금 `loadPosts()`에서 함께 처리하면 되지 않을까.
+
+4. 꾸안꾸 디자인을 원했는데 너무 안꾸 같다. 메인 페이지라도 [three.js](https://threejs.org/) 같은걸로 멋지게 만들고 싶다.
+
+언젠가 위 내용으로도 또 글을 쓸 수 있었으면 좋겠다.
