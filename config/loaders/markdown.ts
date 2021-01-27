@@ -54,6 +54,10 @@ const extendOptions: any = {
     code(this: any, code: string, infostring: string) {
       const lang = (infostring || '').match(/\S*/)?.[0];
 
+      if (lang === 'mermaid') {
+        return mermaidRenderer(code);
+      }
+
       if (this.options.highlight) {
         const out = this.options.highlight(code, lang);
         if (out != null && out !== code) {
@@ -100,4 +104,10 @@ export default function markdownLoader(
 
   this.callback(null, markdown, map, meta);
   return;
+}
+
+function mermaidRenderer(code: string) {
+  const mermaidClass = 'mermaid';
+
+  return '<div class="' + mermaidClass + '">\n' + code + '\n</div>';
 }

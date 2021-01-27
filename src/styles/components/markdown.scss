@@ -248,6 +248,13 @@
       clear: both;
     }
   }
+
+  /* ETC */
+
+  div.mermaid {
+    color: $color-background;
+    text-align: center;
+  }
 }
 
 .markdown-front {

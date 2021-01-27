@@ -33,7 +33,7 @@ export function loadPosts(devMode: boolean) {
       template: path.relative(PROJECT_ROOT, path.resolve(directory, filename)),
       chunks: [`posts/${getEntryKey(POST_ROOT, directory)}`],
       favicon: path.resolve(PROJECT_ROOT, 'src/assets/images/favicon.ico'),
-      minify: { collapseWhitespace: true },
+      // minify: { collapseWhitespace: true },
     };
 
     html.push(htmlOptions);

@@ -91,6 +91,12 @@ const config: webpack.Configuration = {
           name: 'vendors',
           chunks: 'all',
         },
+        mermaid: {
+          test: /[\\/]node_modules[\\/]mermaid[\\/]/,
+          name: 'mermaid',
+          chunks: 'all',
+          priority: 10,
+        },
       },
     },
   },
