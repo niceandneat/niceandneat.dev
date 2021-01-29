@@ -252,8 +252,12 @@
   /* ETC */
 
   div.mermaid {
-    color: $color-background;
+    display: none;
     text-align: center;
+  }
+
+  div.mermaid.show {
+    display: block;
   }
 }
 

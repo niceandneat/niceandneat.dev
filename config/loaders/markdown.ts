@@ -3,7 +3,7 @@ import fm from 'front-matter';
 import Prism from 'prismjs';
 import loadLanguages from 'prismjs/components/';
 
-import { slug } from '../utils';
+import { dashfy } from '../utils';
 
 const supportLanguages = [
   'html',
@@ -39,13 +39,13 @@ const defaultOptions: marked.MarkedOptions = {
 
 const extendOptions: any = {
   renderer: {
-    heading(text: string, level: number) {
-      const escapedText = slug(text);
+    heading(text: string, level: number, raw: string, slugger: marked.Slugger) {
+      const name = slugger.slug(dashfy(text));
 
       return `
             <h${level}>
               ${text}
-              <a name="${escapedText}" class="anchor" href="#${escapedText}">
+              <a name="${name}" class="anchor" href="#${name}">
                 <span class="header-link"></span>
               </a>
             </h${level}>`;
