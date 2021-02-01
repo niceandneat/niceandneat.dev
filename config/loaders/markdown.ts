@@ -109,5 +109,5 @@ export default function markdownLoader(
 function mermaidRenderer(code: string) {
   const mermaidClass = 'mermaid';
 
-  return '<div class="' + mermaidClass + '">\n' + code + '\n</div>';
+  return '<pre><div class="' + mermaidClass + '">\n' + code + '\n</div></pre>';
 }
